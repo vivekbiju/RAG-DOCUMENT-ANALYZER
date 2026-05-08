@@ -34,3 +34,6 @@ jobs:
           file: ./Dockerfile.frontend
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/rag-frontend:latest
+      - name: Trigger Deployment
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}

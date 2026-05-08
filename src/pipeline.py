@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 
+from langsmith import traceable
+
 # ROBUST IMPORT STRATEGY
 try:
     from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
@@ -47,11 +49,13 @@ class GeminiRAG:
         # 4. Initialize LLM
         self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3)
 
+    @traceable(name="RAG_Retriever", run_type="retriever") 
     def retrieve_and_rerank(self, question):
         """Used by Streamlit to get docs for the 'Evidence' expander."""
         print(f"[RETRIEVAL] Fetching candidates for: '{question}'")
         return self.retriever.invoke(question)
 
+    @traceable(name="RAG_Generator", run_type="llm") 
     def generate(self, question, relevant_docs):
         """Core generation logic using a technical persona."""
         context_text = "\n\n---\n".join([doc.page_content for doc in relevant_docs])
