@@ -2,7 +2,7 @@ name: Sync to Hugging Face Spaces
 
 on:
   push:
-    branches: [main] # Triggers on push to either branch name
+    branches: [maingit add .github/workflows/deploy.yml] # Triggers on push to either branch name
 
 jobs:
   deploy:
@@ -18,4 +18,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         
-        run: git push --force https://Vivekbiju0:$HF_TOKEN@huggingface.co/spaces/Vivekbiju0/RAG-Document-Analyzer.git master:main
+        run: git push --force https://Vivekbiju0:$HF_TOKEN@huggingface.co/spaces/Vivekbiju0/RAG-Document-Analyzer.git main:main
