@@ -79,11 +79,12 @@ class GeminiRAG:
             return " ".join([part['text'] if isinstance(part, dict) and 'text' in part else str(part) for part in content])
         return content
 
+    @traceable(name="RAG_Pipeline", run_type="chain") # <-- Add this parent decorator
     def query_system(self, question):
-        """Standard orchestration for the terminal/CLI mode."""
+        """Standard orchestration for the terminal/CLI mode and parent span."""
         docs = self.retrieve_and_rerank(question)
-        return self.generate(question, docs)
-
+        answer = self.generate(question, docs)
+        return answer
 if __name__ == "__main__":
     # Standard CLI loop for local testing
     rag = GeminiRAG()

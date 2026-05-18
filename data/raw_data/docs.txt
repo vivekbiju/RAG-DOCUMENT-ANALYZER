@@ -31,5 +31,5 @@ In this work, we use sine and cosine functions of different frequencies:
 
 where 'pos' is the position and 'i' is the dimension. This allows the model to easily learn to attend by relative positions, as for any fixed offset k, PE(pos+k) can be represented as a linear function of PE(pos).
 
-5. RESULTS:
+6. RESULTS:
 On the WMT 2014 English-to-German translation task, the big transformer model outperformed the best previously reported models by more than 2.0 BLEU, establishing a new state-of-the-art score of 28.4.

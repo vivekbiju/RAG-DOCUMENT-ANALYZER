@@ -1,6 +1,14 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
-.env
-notebooks/
 .git/
+.gitignore
+.pytest_cache/
+notebooks/
+tests/
+
+
+chroma_db/
+data/
+.env

@@ -1,17 +1,34 @@
+# Use a lightweight, explicit Python base image to minimize size
 FROM python:3.11-slim
+
+# Force Python not to write .pyc cache files inside the container
+ENV PYTHONTOWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Install standard dependencies and clear apt cache in one step to save space
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first to leverage Docker layer caching
+COPY ./requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy everything
-COPY . .
+# Copy only the frontend folder assets
+COPY ./frontend ./frontend
 
+# Streamlit runs on 8501 by default
 EXPOSE 8501
 
-# Streamlit-specific flags for Docker
-#CMD ["streamlit", "run", "frontend/app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true", "--browser.gatherUsageStats=false"]
-#CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
-# This lets the container find streamlit automatically
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Add a healthcheck to ensure the UI stays active
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl --fail http://localhost:8501/_stcore/health || exit 1
+
+# Start Streamlit with optimized settings for deployment
+CMD ["streamlit", "run", "frontend/app.py", \
+     "--server.port=8501", \
+     "--server.address=0.0.0.0", \
+     "--server.headless=true", \
+     "--browser.gatherUsageStats=false"]

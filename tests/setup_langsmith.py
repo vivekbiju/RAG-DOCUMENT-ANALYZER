@@ -1,7 +1,7 @@
 # tests/sync_langsmith.py
 import os
 from langsmith import Client
-from tests.custom_eval import test_set  
+from tests.test_custom_eval import test_set  
 from dotenv import load_dotenv
 
 # 1. Load variables from .env file

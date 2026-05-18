@@ -1,24 +1,32 @@
+# Use an explicit, lightweight base image to keep image size small
 FROM python:3.11-slim
+
+# Force Python not to write .pyc garbage files to disk inside the container
+ENV PYTHONTOWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install basic system compiler tools only if needed (required for ChromaDB compilation)
+# We wipe the apt cache in the same line to save hundreds of megabytes
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install requirements first (better for caching)
+# Layer cacheoptimization: Copy requirements first so Docker doesn't 
+# re-download packages every time you modify a line of code
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the project
-COPY . .
+# Copy ONLY the files your backend actually needs to run
+COPY ./src ./src
+COPY ./backend ./backend
 
-# CRITICAL: Add the current directory to PYTHONPATH
-ENV PYTHONPATH=/app
+# Optional: Only copy your 'chroma_db' folder if you have pre-embedded a static 
+# dataset locally that you want baked right into your deployment
+# COPY ./chroma_db ./chroma_db
 
 EXPOSE 8000
 
-# Ensure this path matches where your main.py actually sits!
+# Start your backend application (Adjust the module path if your entry file is different)
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

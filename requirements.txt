@@ -26,3 +26,5 @@ requests
 # Evaluation & DevOps
 ragas
 python-dotenv
+
+langsmith

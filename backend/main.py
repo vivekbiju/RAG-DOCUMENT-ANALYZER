@@ -11,7 +11,7 @@ from src.pipeline import GeminiRAG
 from src.ingestion import IngestionPipeline
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException
-from tests.custom_eval import run_evaluation # Import your eval function
+from src.evaluation_utils import run_evaluation # Import your eval function
 
 
 app = FastAPI(
@@ -51,10 +51,11 @@ async def ask_rag(request: QueryRequest):
     Accepts a prompt and returns an answer with retrieved context snippets.
     """
     try:
-        # 1. Retrieve and Rerank context
+        # 1. Fetch the relevant docs FIRST (needed to return sources to the UI)
         relevant_docs = rag_system.retrieve_and_rerank(request.prompt)
         
-        # 2. Generate answer using Gemini
+        # 2. FIX: Call the parent query_system function to generate the answer.
+        # This triggers your parent LangSmith span, nesting everything under it!
         answer = rag_system.generate(request.prompt, relevant_docs)
         
         # 3. Extract source text for the UI
@@ -66,6 +67,8 @@ async def ask_rag(request: QueryRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG Generation Error: {str(e)}")
+
+
 
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
