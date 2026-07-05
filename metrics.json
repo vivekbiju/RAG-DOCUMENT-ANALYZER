@@ -1,7 +1,7 @@
 {
-    "faithfulness": 0.9375,
-    "relevancy": 0.4260663033229141,
-    "precision": 0.9999999999333333,
+    "faithfulness": 1.0,
+    "relevancy": 0.8013125147788096,
+    "precision": NaN,
     "total_tests": 2,
-    "last_run": "2026-05-08 19:55"
+    "last_run": "2026-07-02 23:24"
 }

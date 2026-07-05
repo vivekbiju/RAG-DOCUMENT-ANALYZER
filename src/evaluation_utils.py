@@ -1,44 +1,48 @@
 import os
-import pandas as pd
 import time
 import json
 from datetime import datetime
-from src.pipeline import GeminiRAG
+
+import pandas as pd
+from datasets import Dataset
 from dotenv import load_dotenv
+
+# Initialize environment variables immediately
+load_dotenv()
+
 from ragas import evaluate
-from ragas.metrics import (
+from ragas.metrics.collections import (
     Faithfulness,
     AnswerRelevancy,
     ContextPrecision,
     ContextRecall
 )
-from langchain_google_genai import ChatGoogleGenerativeAI
-from datasets import Dataset
+from ragas.llms import llm_factory
+from ragas.embeddings.base import embedding_factory
+from google import genai
+
 from langchain_core.tracers.context import collect_runs
-
-load_dotenv()
-
-test_set = [
-    {
-        "question": "What is the core benefit of the Transformer over RNNs?",
-        "ground_truth": "The Transformer allows for significantly more parallelization and requires less time to train compared to recurrent models."
-    },
-    {
-        "question": "Explain the Scaled Dot-Product Attention formula.",
-        "ground_truth": "It computes the dot products of the query with all keys, divides by the square root of the key dimension, and applies a softmax function to the values."
-    }
-]
+from src.pipeline import GeminiRAG
 
 
 def run_evaluation():
     # Initialize RAG system
     rag_system = GeminiRAG()
     
-    # Judge LLM
-    judge_llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash", 
-        google_api_key=os.environ.get("GOOGLE_API_KEY"),
-        temperature=0
+    # 1. Initialize the official Google GenAI Client
+    google_client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    
+    # 2. Build the native judge LLM and Embeddings via factories
+    judge_llm = llm_factory(
+        model="gemini-2.5-flash",
+        provider="google",
+        client=google_client
+    )
+
+    judge_embeddings = embedding_factory(
+        model="text-embedding-004",
+        provider="google",
+        client=google_client
     )
 
     test_set = [
@@ -73,28 +77,35 @@ def run_evaluation():
         
         if i < len(test_set) - 1:
             print("Pausing to respect rate limits...")
-            time.sleep(15) # Adjusted for paid tier efficiency, increase if using free tier
+            time.sleep(15) 
 
     dataset = Dataset.from_list(results)
     print("\n--- Running RAGAS Evaluation ---")
     
     with collect_runs() as cb:
         try:
-            metrics = [Faithfulness(), AnswerRelevancy(), ContextPrecision(), ContextRecall()]
+            # 3. Instantiate standard metrics without arguments
+            metrics = [
+                Faithfulness(), 
+                AnswerRelevancy(), 
+                ContextPrecision(), 
+                ContextRecall()
+            ]
 
+            # 4. Pass the global LLM and Embeddings directly into evaluate()
             score = evaluate(
                 dataset=dataset,
                 metrics=metrics,
                 llm=judge_llm,
-                embeddings=rag_system.embeddings
+                embeddings=judge_embeddings
             )
-            # This makes your results appear as an "Experiment" in LangSmith
+            
             run_id = cb.traced_runs[0].id if cb.traced_runs else None
             print(f"Traced to LangSmith! Run ID: {run_id}")
 
             df = score.to_pandas()
 
-            # --- NEW: CALCULATE MEAN SCORES FOR UI ---
+            # --- CALCULATE MEAN SCORES FOR UI ---
             summary_metrics = {
                 "faithfulness": float(df['faithfulness'].mean()),
                 "relevancy": float(df['answer_relevancy'].mean()),

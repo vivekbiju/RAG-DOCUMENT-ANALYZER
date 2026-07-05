@@ -5,25 +5,15 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from dotenv import load_dotenv
+
+# Load environment variables once at the module level
 load_dotenv()
 
 
 class IngestionPipeline:
     def __init__(self, db_dir="./chroma_db", model_name="models/gemini-embedding-001"):
         self.db_dir = db_dir
-        
-        # DEFENSIVE API KEY SANITIZATION
-        raw_key = os.getenv("GOOGLE_API_KEY", "")
-        api_key = raw_key.replace('"', '').replace("'", "").replace('\\', '').strip()
-        
-        if not api_key:
-            print("⚠️ WARNING: GOOGLE_API_KEY is empty inside Ingestion pipeline!")
-
-        # Initialize Embeddings with sanitized explicit key
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model=model_name,
-            google_api_key=api_key
-        )
+        self.embeddings = GoogleGenerativeAIEmbeddings(model=model_name)
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -48,9 +38,16 @@ class IngestionPipeline:
         """
         Processes a single file: Loads, Chunks, and Adds to the ChromaDB.
         """
+        # 1. Load the document
         docs = self.load_document(file_path)
+        
+        # 2. Split into chunks
         chunks = self.text_splitter.split_documents(docs)
         print(f"Created {len(chunks)} chunks from {file_path}")
+
+        # 3. Add to Vector Store
+        # We initialize the Chroma object first.
+        # If the directory exists, it loads it; if not, it prepares to create it.
         print(f"Updating vector store at {self.db_dir}...")
         
         vectorstore = Chroma(
@@ -58,13 +55,17 @@ class IngestionPipeline:
             embedding_function=self.embeddings
         )
         
+        # Add the new chunks to the existing collection
         vectorstore.add_documents(chunks)
+        
         print(f"Successfully added {file_path} to the knowledge base.")
         return vectorstore
 
+
 if __name__ == "__main__":
+    # Local testing logic
     test_file = os.path.join("data", "processed_data", "docs_clean.txt")
-    
+   
     if os.path.exists(test_file):
         pipeline = IngestionPipeline()
         pipeline.run(test_file)

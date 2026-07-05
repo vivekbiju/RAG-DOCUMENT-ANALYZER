@@ -4,8 +4,6 @@ from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langsmith import traceable
 
-
-
 # ROBUST IMPORT STRATEGY
 try:
     from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
@@ -22,27 +20,16 @@ except ImportError:
 
 load_dotenv()
 
+
 class GeminiRAG:
     def __init__(self, db_dir="./chroma_db"):
-        # DEFENSIVE API KEY SANITIZATION
-        raw_key = os.getenv("GOOGLE_API_KEY", "")
-        
-        # Strip literal quote marks, backslashes, and whitespaces that break cloud runtimes
-        api_key = raw_key.replace('"', '').replace("'", "").replace('\\', '').strip()
-        
-        if not api_key:
-            print("⚠️ WARNING: GOOGLE_API_KEY resolved as EMPTY after cleaning!")
-
-        # 1. Initialize Embeddings with sanitized explicit key
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001",
-            google_api_key=api_key
-        )
+        # 1. Initialize Embeddings
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
         
         # 2. Load Vector Store
         self.vectorstore = Chroma(persist_directory=db_dir, embedding_function=self.embeddings)
         base_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 10})
-
+        
         # 3. Initialize Reranker (Two-Stage Retrieval)
         if FlashrankRerank and ContextualCompressionRetriever:
             try:
@@ -57,36 +44,33 @@ class GeminiRAG:
                 self.retriever = base_retriever
         else:
             self.retriever = base_retriever
+            print("System initialized with Base Retriever.")
+            
+        # 4. Initialize LLM
+        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3)
 
-        # 4. Initialize LLM with sanitized explicit key
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", 
-            temperature=0.3,
-            google_api_key=api_key
-        )
-
-    @traceable(name="RAG_Retriever", run_type="retriever") 
+    @traceable(name="RAG_Retriever", run_type="retriever")
     def retrieve_and_rerank(self, question):
         """Used by Streamlit to get docs for the 'Evidence' expander."""
         print(f"[RETRIEVAL] Fetching candidates for: '{question}'")
         return self.retriever.invoke(question)
 
-    @traceable(name="RAG_Generator", run_type="llm") 
+    @traceable(name="RAG_Generator", run_type="llm")
     def generate(self, question, relevant_docs):
         """Core generation logic using a technical persona."""
         context_text = "\n\n---\n".join([doc.page_content for doc in relevant_docs])
         
         prompt = f"""You are a technical AI expert. Answer the question using ONLY the provided context.
-        If the answer is not in the context, say you don't have enough information.
+If the answer is not in the context, say you don't have enough information.
 
-        CONTEXT:
-        {context_text}
+CONTEXT:
+{context_text}
 
-        QUESTION: {question}
+QUESTION: {question}
 
-        ANSWER:"""
+ANSWER:"""
 
-        print(f"[GENERATION] Consulting Gemini...")
+        print("[GENERATION] Consulting Gemini...")
         response = self.llm.invoke(prompt)
         
         # Robust content parsing
@@ -95,14 +79,16 @@ class GeminiRAG:
             return " ".join([part['text'] if isinstance(part, dict) and 'text' in part else str(part) for part in content])
         return content
 
-    @traceable(name="RAG_Pipeline", run_type="chain") 
+    @traceable(name="RAG_Pipeline", run_type="chain")
     def query_system(self, question):
         """Standard orchestration for the terminal/CLI mode and parent span."""
         docs = self.retrieve_and_rerank(question)
         answer = self.generate(question, docs)
         return answer
 
+
 if __name__ == "__main__":
+    # Standard CLI loop for local testing
     rag = GeminiRAG()
     print("\nREADY: Ask about 'Attention Is All You Need'")
     

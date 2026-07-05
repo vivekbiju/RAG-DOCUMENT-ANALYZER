@@ -12,7 +12,7 @@ langchain
 langchain-community
 langchain-google-genai>=4.2.0
 google-genai
-google-generativeai
+google-generativeai>=0.8.0
 
 # Vector Database
 langchain-chroma>=1.1.0
