@@ -22,11 +22,11 @@ COPY ./backend ./backend
 COPY ./frontend ./frontend
 COPY ./available_models.py .
 
-# --- CACHE BUST LAYER ---
-RUN echo "Triggering clean network layout build at 2026-07-06"
+# --- CACHE BUST & LOG REDIRECT ---
+RUN echo "Forcing clean real-time log stream tracking v3 with uploader security flags"
 
-# Create a configuration file for Supervisor to run both apps at once
-RUN echo '[supervisord]\nnodaemon=true\n\n[program:backend]\ncommand=uvicorn backend.main:app --host 0.0.0.0 --port 8000\n\n[program:frontend]\ncommand=streamlit run frontend/app.py --server.port=7860 --server.address=0.0.0.0 --server.headless=true --browser.gatherUsageStats=false\n' > /etc/supervisor/conf.d/supervisord.conf
+# --- FIXED: Added uploader security override flags to the Streamlit command line ---
+RUN echo '[supervisord]\nnodaemon=true\n\n[program:backend]\ncommand=uvicorn backend.main:app --host 0.0.0.0 --port 8000\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\n\n[program:frontend]\ncommand=streamlit run frontend/app.py --server.port=7860 --server.address=0.0.0.0 --server.headless=true --browser.gatherUsageStats=false --server.enableXsrfProtection=false --server.enableCORS=false\n' > /etc/supervisor/conf.d/supervisord.conf
 
 # Hugging Face Spaces strictly requires exposing port 7860
 EXPOSE 7860
