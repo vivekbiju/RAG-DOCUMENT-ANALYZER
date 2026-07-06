@@ -25,7 +25,10 @@ st.markdown("""
 #API_URL = "http://backend:8000" # for docker run
 
 # Check if running inside Docker, otherwise default to localhost
-API_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+# 3. Configuration
+# Hardcode it to use loopback interface since they run side-by-side under Supervisor
+API_URL = "http://127.0.0.1:8000"
+#API_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 # 4. Sidebar - Dashboard & Management
 with st.sidebar:
