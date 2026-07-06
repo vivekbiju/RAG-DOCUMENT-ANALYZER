@@ -13,7 +13,9 @@ from src.ingestion import IngestionPipeline
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from src.evaluation_utils import run_evaluation # Import your eval function
 
-
+import sys
+# Inject the parent root directory into Python's lookup paths
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 app = FastAPI(
     title="RAG Research API",
     description="Backend API for Transformer Research Assistant with Gemini & ChromaDB",
