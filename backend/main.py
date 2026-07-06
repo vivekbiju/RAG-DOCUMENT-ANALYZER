@@ -4,59 +4,55 @@ import shutil
 from pathlib import Path
 from typing import List
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware  # <-- ADD THIS IMPORT
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-# 1. Initialize environment configurations
+# Initialize environment configurations
 load_dotenv()
 
-# 2. Dynamically add the project root directory to the Python path
-# This handles the root execution path mapping inside the container context
 BASE_PATH = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_PATH))
 
-# 3. Environment Variable Bridge
-# Synchronize credentials so third-party metrics and your core models use the same key
 effective_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 if effective_key:
     os.environ["GEMINI_API_KEY"] = effective_key
     os.environ["GOOGLE_API_KEY"] = effective_key
 
-# 4. Secure Production Directory Layout Creation
-# Bypasses restricted system permissions by anchoring directly to the project root path
 for folder_name in ["data/uploads", "data/processed", "chroma_db"]:
     target_dir = BASE_PATH / folder_name
     try:
         target_dir.mkdir(parents=True, exist_ok=True)
-        print(f"📁 Successfully verified/created directory: {folder_name}")
     except Exception as e:
-        print(f"⚠️ Directory creation warning for {folder_name}: {e}")
+        print(f"⚠️ Directory creation warning: {e}")
 
-# Define relative path constant for data uploads
 UPLOAD_DIR = BASE_PATH / "data/uploads"
 
-# 5. Fault-Tolerant Pipeline Instantiation
 try:
     from src.pipeline import GeminiRAG
     from src.ingestion import IngestionPipeline
     from src.evaluation_utils import run_evaluation
-
-    print("🚀 Initializing core RAG components...")
     rag_system = GeminiRAG()
     ingestor = IngestionPipeline()
-    print("✅ RAG pipeline components ready!")
 except Exception as init_err:
-    print(f"⚠️ Warning during core pipeline boot phase: {init_err}")
-    print("Fallback empty states will be caught during live endpoint interaction.")
     rag_system = None
     ingestor = None
 
-# 6. FastAPI Setup
 app = FastAPI(
     title="RAG Research API",
     description="Backend API for Transformer Research Assistant with Gemini & ChromaDB",
     version="1.0.0"
 )
+
+# 👇 ADD THIS CORS MIDDLEWARE BLOCK RIGHT HERE 👇
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins to connect inside the container space safely
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows POST, GET, OPTIONS, etc.
+    allow_headers=["*"],
+)
+
 
 # --- Data Models ---
 class QueryRequest(BaseModel):
