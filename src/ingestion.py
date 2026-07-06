@@ -13,12 +13,14 @@ load_dotenv()
 
 class IngestionPipeline:
     def __init__(self, db_dir=None, model_name="text-embedding-004"):
-        # Anchor paths dynamically relative to the runtime root directory
+        """
+        Initializes the Ingestion Pipeline.
+        Anchors paths dynamically to avoid OS-level directory locks in production containers.
+        """
         base_path = Path(__file__).resolve().parent.parent
         self.db_dir = str(base_path / "chroma_db") if db_dir is None else db_dir
         
-        # FIX 1: Use the correct, imported GoogleGenAIEmbeddings class universally
-        # FIX 2: Aligned to the stable text-embedding-004 layout model string
+        # --- FIXED: Use the correct parameter keyword 'model' instead of 'model_name' ---
         self.embeddings = GoogleGenAIEmbeddings(model=model_name)
         
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -43,7 +45,7 @@ class IngestionPipeline:
 
     def run(self, file_path):
         """
-        Processes a single file: Loads, Chunks, and Adds to the ChromaDB.
+        Processes a single file: Loads, Chunks, and Adds to the ChromaDB collection.
         """
         # 1. Load the document
         docs = self.load_document(file_path)
@@ -55,7 +57,7 @@ class IngestionPipeline:
         # 3. Add to Vector Store
         print(f"Updating vector store at {self.db_dir}...")
         
-        # Using the clean class instance initialized at runtime boot
+        # Native integration using the strictly typed LangChain-Chroma vector wrapper
         vectorstore = Chroma(
             persist_directory=self.db_dir,
             embedding_function=self.embeddings
@@ -69,7 +71,7 @@ class IngestionPipeline:
 
 
 if __name__ == "__main__":
-    # Local testing logic coordinates path matching
+    # Local testing entry path handler
     base_path = Path(__file__).resolve().parent.parent
     test_file = base_path / "data" / "processed_data" / "docs_clean.txt"
    
