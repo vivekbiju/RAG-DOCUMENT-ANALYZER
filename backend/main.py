@@ -6,6 +6,9 @@ from pydantic import BaseModel
 from typing import List
 from pathlib import Path
 
+import sys
+# Dynamically add the project root directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Importing your logic from the src folder
 from src.pipeline import GeminiRAG
 from src.ingestion import IngestionPipeline
@@ -13,9 +16,6 @@ from src.ingestion import IngestionPipeline
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from src.evaluation_utils import run_evaluation # Import your eval function
 
-import sys
-# Inject the parent root directory into Python's lookup paths
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 app = FastAPI(
     title="RAG Research API",
     description="Backend API for Transformer Research Assistant with Gemini & ChromaDB",
