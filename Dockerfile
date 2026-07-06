@@ -22,8 +22,9 @@ COPY ./backend ./backend
 COPY ./frontend ./frontend
 COPY ./available_models.py .
 
-# --- FIXED: Changed --host 127.0.0.1 to --host 0.0.0.0 so Streamlit can bridge to the API ---
+# --- FORCE REBUILD RE-BINDING ---
 RUN echo '[supervisord]\nnodaemon=true\n\n[program:backend]\ncommand=uvicorn backend.main:app --host 0.0.0.0 --port 8000\n\n[program:frontend]\ncommand=streamlit run frontend/app.py --server.port=7860 --server.address=0.0.0.0 --server.headless=true --browser.gatherUsageStats=false\n' > /etc/supervisor/conf.d/supervisord.conf
+
 
 # Hugging Face Spaces strictly requires exposing port 7860
 EXPOSE 7860
