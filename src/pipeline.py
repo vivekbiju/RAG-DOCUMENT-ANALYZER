@@ -1,7 +1,9 @@
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_google_genai import GoogleGenAIEmbeddings, ChatGoogleGenerativeAI
 from langsmith import traceable
 
 # ROBUST IMPORT STRATEGY
@@ -22,12 +24,16 @@ load_dotenv()
 
 
 class GeminiRAG:
-    def __init__(self, db_dir="./chroma_db"):
-        # 1. Initialize Embeddings
-        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+    def __init__(self, db_dir=None):
+        # Anchor paths dynamically relative to the runtime root directory
+        base_path = Path(__file__).resolve().parent.parent
+        self.db_dir = str(base_path / "chroma_db") if db_dir is None else db_dir
+
+        # 1. FIX: Aligned class name and model name parameter with text-embedding-004
+        self.embeddings = GoogleGenAIEmbeddings(model="text-embedding-004")
         
-        # 2. Load Vector Store
-        self.vectorstore = Chroma(persist_directory=db_dir, embedding_function=self.embeddings)
+        # 2. Load Vector Store cleanly
+        self.vectorstore = Chroma(persist_directory=self.db_dir, embedding_function=self.embeddings)
         base_retriever = self.vectorstore.as_retriever(search_kwargs={"k": 10})
         
         # 3. Initialize Reranker (Two-Stage Retrieval)
