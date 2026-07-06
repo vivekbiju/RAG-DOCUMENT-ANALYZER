@@ -25,6 +25,9 @@ requests
 
 # Evaluation & DevOps
 ragas
-python-dotenv
+dotenv
 
 langsmith
+
+ragas>=0.2.0
+langchain-core
