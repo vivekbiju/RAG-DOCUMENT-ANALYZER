@@ -1,19 +1,26 @@
 import os
+import sys
 import shutil
+from pathlib import Path
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, UnstructuredMarkdownLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
+from langchain_google_genai import GoogleGenAIEmbeddings
 from dotenv import load_dotenv
 
 # Load environment variables once at the module level
 load_dotenv()
 
-
 class IngestionPipeline:
-    def __init__(self, db_dir="./chroma_db", model_name="models/gemini-embedding-001"):
-        self.db_dir = db_dir
-        self.embeddings = GoogleGenerativeAIEmbeddings(model=model_name)
+    def __init__(self, db_dir=None, model_name="text-embedding-004"):
+        # Anchor paths dynamically relative to the runtime root directory
+        base_path = Path(__file__).resolve().parent.parent
+        self.db_dir = str(base_path / "chroma_db") if db_dir is None else db_dir
+        
+        # FIX 1: Use the correct, imported GoogleGenAIEmbeddings class universally
+        # FIX 2: Aligned to the stable text-embedding-004 layout model string
+        self.embeddings = GoogleGenAIEmbeddings(model=model_name)
+        
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -46,10 +53,9 @@ class IngestionPipeline:
         print(f"Created {len(chunks)} chunks from {file_path}")
 
         # 3. Add to Vector Store
-        # We initialize the Chroma object first.
-        # If the directory exists, it loads it; if not, it prepares to create it.
         print(f"Updating vector store at {self.db_dir}...")
         
+        # Using the clean class instance initialized at runtime boot
         vectorstore = Chroma(
             persist_directory=self.db_dir,
             embedding_function=self.embeddings
@@ -63,11 +69,12 @@ class IngestionPipeline:
 
 
 if __name__ == "__main__":
-    # Local testing logic
-    test_file = os.path.join("data", "processed_data", "docs_clean.txt")
+    # Local testing logic coordinates path matching
+    base_path = Path(__file__).resolve().parent.parent
+    test_file = base_path / "data" / "processed_data" / "docs_clean.txt"
    
-    if os.path.exists(test_file):
+    if test_file.exists():
         pipeline = IngestionPipeline()
-        pipeline.run(test_file)
+        pipeline.run(str(test_file))
     else:
         print(f"Error: {test_file} not found.")
