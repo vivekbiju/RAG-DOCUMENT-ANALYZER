@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langsmith import traceable
 
 # ROBUST PROCESS RETRIEVER IMPORT STRATEGY
@@ -33,7 +33,7 @@ class GeminiRAG:
         self.db_dir = str(base_path / "chroma_db") if db_dir is None else db_dir
 
         # 1. FIXED: Corrected class reference and unified embedding model tracking
-        self.embeddings = GoogleGenAIEmbeddings(model="text-embedding-004")
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
         
         # 2. Load Vector Store Instance cleanly
         self.vectorstore = Chroma(persist_directory=self.db_dir, embedding_function=self.embeddings)

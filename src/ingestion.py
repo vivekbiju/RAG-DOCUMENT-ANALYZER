@@ -5,7 +5,7 @@ from pathlib import Path
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, UnstructuredMarkdownLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from dotenv import load_dotenv
 
 # Load environment variables once at the module level
@@ -20,8 +20,7 @@ class IngestionPipeline:
         base_path = Path(__file__).resolve().parent.parent
         self.db_dir = str(base_path / "chroma_db") if db_dir is None else db_dir
         
-        # --- FIXED: Use the correct parameter keyword 'model' instead of 'model_name' ---
-        self.embeddings = GoogleGenAIEmbeddings(model=model_name)
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
         
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
