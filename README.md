@@ -12,6 +12,8 @@ pinned: false
 
 # Advanced RAG Research Assistant: Transformer Architecture
 
+### System Interface
+
 <img width="1873" height="793" alt="image" src="https://github.com/user-attachments/assets/56e58ef9-b0f0-46c2-a5a9-a61bd22e81b5" />
 
 
@@ -169,7 +171,7 @@ docker-compose up --build
 
 ## Screenshots
 
-### System Interface
+![alt text](image.png)
 
 Below is a live look at the production interface tracking and rendering advanced context-retrieval spans:
 
@@ -197,7 +199,7 @@ docker-compose down
 ## Credits
 
 Developer: Vivek Biju
-GitHub: https://github.com/Vivekbiju0
+GitHub: https://github.com/vivekbiju?tab=repositories
 
 ## License
 
