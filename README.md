@@ -12,6 +12,9 @@ pinned: false
 
 # Advanced RAG Research Assistant: Transformer Architecture
 
+<img width="1873" height="793" alt="image" src="https://github.com/user-attachments/assets/56e58ef9-b0f0-46c2-a5a9-a61bd22e81b5" />
+
+
 A production-ready, enterprise-grade Retrieval-Augmented Generation (RAG) system engineered to query complex technical research papers. This project demonstrates an advanced two-stage hybrid retrieval pipeline leveraging Google Gemini 2.5 Flash and a FlashRank Cross-Encoder Reranker, coupled with robust multi-container microservices, enterprise LLMOps logging, and automated CI/CD.
 
 Live Demo: https://huggingface.co/spaces/Vivekbiju0/RAG-Document-Analyzer  
