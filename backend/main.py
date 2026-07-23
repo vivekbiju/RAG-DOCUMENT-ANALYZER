@@ -34,9 +34,12 @@ try:
     from src.evaluation_utils import run_evaluation
     rag_system = GeminiRAG()
     ingestor = IngestionPipeline()
+
 except Exception as init_err:
+    print(f"❌ HF BOOT ERROR: {init_err}") 
     rag_system = None
     ingestor = None
+
 
 app = FastAPI(
     title="RAG Research API",
