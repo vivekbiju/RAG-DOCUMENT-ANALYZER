@@ -19,8 +19,6 @@ Live Demo: https://huggingface.co/spaces/Vivekbiju0/RAG-Document-Analyzer
 Observability Dashboard: https://aws.smith.langchain.com/o/a01e2752-b31e-4cf6-b828-f7a2634b5944/projects/p/defd6317-d455-4f33-847a-b3ff3387a35b  
 Production Repo: https://github.com/Vivekbiju0/RAG-Document-Analyzer
 
----
-```markdown
 ## Table of Contents
 
 - [Overview](#overview)
@@ -36,7 +34,6 @@ Production Repo: https://github.com/Vivekbiju0/RAG-Document-Analyzer
 - [Credits](#credits)
 - [License](#license)
 
----
 
 ## Overview
 
@@ -53,8 +50,6 @@ To deliver an isolated, dual-stage hybrid retrieval system capable of parsing te
 - Established isolated evaluation frameworks to decouple production steps from development dependencies.
 - Synchronized parent-child trace execution graphs using LangSmith integration.
 
----
-
 ## Features
 
 - **Two-Stage Hybrid Retrieval:** Fetches top candidate nodes via vector similarity and refines them using a localized Cross-Encoder reranker.
@@ -63,7 +58,6 @@ To deliver an isolated, dual-stage hybrid retrieval system capable of parsing te
 - **Non-Blocking Background Metrics:** Asynchronous evaluation offloading via `BackgroundTasks` queue mapping.
 - **Secure Environment Architecture:** Strict routing of keys through ephemeral container memory variables with zero hardcoded credentials.
 
----
 
 ## Tech Stack
 
@@ -87,13 +81,11 @@ To deliver an isolated, dual-stage hybrid retrieval system capable of parsing te
 - GitHub Actions CI/CD
 - LangSmith Tracing Engine
 
----
-
 ## Architecture
 
 ### 1. Production Workflow
 
-```text
+```
        ┌─────────────────────────────────────────────────────────┐
        │                 Hugging Face Spaces (Pod)               │
        │                                                         │
@@ -115,7 +107,7 @@ To deliver an isolated, dual-stage hybrid retrieval system capable of parsing te
 
 ### 2. Folder Structure
 
-```text
+```
 project-root/
 ├── .github/
 │   └── workflows/
@@ -140,13 +132,11 @@ project-root/
 
 ```
 
----
 
 ## Database Design
 
 The system implements a persistent document vector storage design mapping locally to disk under the `chroma_db/` volume configuration. Raw text manuscripts undergo automated ETL processing, splitting data into optimized tokenized chunks before seeding vector spaces through the Google Generative AI embedding engine.
 
----
 
 ## Installation
 
@@ -167,8 +157,6 @@ docker-compose up --build
 
 ```
 
----
-
 ## Usage
 
 1. Open the UI via local port settings or navigate to the Hugging Face live link.
@@ -176,7 +164,6 @@ docker-compose up --build
 3. Submit queries through the interactive interface to inspect dual-stage context generation.
 4. Check the LangSmith Observability link to verify performance logs and parent-child span execution steps.
 
----
 
 ## Screenshots
 
@@ -184,7 +171,6 @@ docker-compose up --build
 
 Below is a live look at the production interface tracking and rendering advanced context-retrieval spans:
 
----
 
 ## Deployment
 
@@ -199,28 +185,18 @@ docker-compose down
 
 ```
 
----
-
 ## Future Improvements
 
 * Add comprehensive unit & integration testing for individual ETL steps.
 * Implement automated real-time alerts for context fallback loops.
 * Add advanced tracking graphs directly inside the Streamlit user panel dashboard.
 
----
 
 ## Credits
 
 Developer: Vivek Biju
-
 GitHub: https://github.com/Vivekbiju0
-
----
 
 ## License
 
-This project is licensed under the MIT License.
-
-```
-
-```
+This project is licensed under the [MIT License](./LICENSE).
