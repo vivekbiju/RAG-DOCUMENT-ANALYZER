@@ -279,6 +279,6 @@ docker-compose down
 
 ## License
 
-This project is licensed under the [MIT License](https://www.google.com/search?q=./LICENSE).
+This project is licensed under the [MIT License](./LICENSE).
 
 
