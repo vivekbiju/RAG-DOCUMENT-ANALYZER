@@ -1,4 +1,4 @@
-```markdown
+
 ---
 title: RAG Document Analyzer
 emoji: 🧪
