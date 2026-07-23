@@ -1,21 +1,22 @@
 import os
 import time
+import json
 import subprocess
 import requests
+import streamlit as st
 
 API_URL = "http://127.0.0.1:8000"
 
+# --- Backend Auto-Spawner ---
 def ensure_backend_running():
     """Ensure the FastAPI backend is active before rendering the UI."""
     try:
-        # Check if backend responds to root ping
         res = requests.get(f"{API_URL}/", timeout=2)
         if res.status_code == 200:
             return True
     except Exception:
         pass
     
-    # If not running, spawn FastAPI backend as a background process
     try:
         subprocess.Popen([
             "python", "-m", "uvicorn", "backend.main:app", 
@@ -28,11 +29,6 @@ def ensure_backend_running():
 # Run startup check on boot
 ensure_backend_running()
 
-import streamlit as st
-import requests
-import json
-import time
-import os
 # 1. Page Configuration
 st.set_page_config(
     page_title="Transformer RAG Expert", 
@@ -40,7 +36,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Custom CSS for a Professional Look
+# 2. Custom CSS
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -50,12 +46,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Configuration
-
-API_URL = "http://127.0.0.1:8000"
-#API_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
-
-# 4. Sidebar - Dashboard & Management
+# 3. Sidebar - Dashboard & Management
 with st.sidebar:
     st.title("📊 Control Center")
     
@@ -64,7 +55,7 @@ with st.sidebar:
         health_check = requests.get(f"{API_URL}/")
         if health_check.status_code == 200:
             st.success("API Status: Online")
-    except:
+    except Exception:
         st.error("API Status: Offline (Check backend)")
 
     st.divider()
@@ -74,25 +65,21 @@ with st.sidebar:
         try:
             with open("metrics.json", "r") as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {"faithfulness": 0, "relevancy": 0, "last_run": "N/A"}
 
     metrics = load_metrics()
 
-    # In your sidebar code:
     st.subheader("Performance Metrics")
     col1, col2 = st.columns(2)
-
-    # Display data from your actual evaluation runs
     col1.metric("Faithfulness", f"{metrics['faithfulness']*100:.0f}%")
     col2.metric("Relevancy", f"{metrics['relevancy']*100:.0f}%")
 
     st.caption(f"Last benchmark run: {metrics['last_run']}")
 
-    
     st.divider()
     
-    #Adding a "Run Benchmark" button to the sidebar
+    # Run Benchmark Button
     st.subheader("🧪 Developer Tools")
     if st.button("🚀 Run System Benchmark", use_container_width=True):
         with st.status("Running RAGAS Evaluation...", expanded=False) as status:
@@ -101,20 +88,21 @@ with st.sidebar:
                 if response.status_code == 200:
                     status.update(label="Benchmark Complete!", state="complete")
                     st.toast("Metrics updated successfully!", icon="✅")
-                    time.sleep(5)
-                if response.status_code==422:
-                    st.error(f"validation error:{response.json()}")
-
-                    st.rerun() # Refresh the UI to show new scores
+                    time.sleep(2)
+                    st.rerun()
+                elif response.status_code == 422:
+                    status.update(label="Validation Error", state="error")
+                    st.error(f"Validation error: {response.json()}")
                 else:
                     status.update(label="Benchmark Failed", state="error")
                     st.error("Check backend logs for details.")
             except Exception as e:
+                status.update(label="Connection Error", state="error")
                 st.error(f"Connection Error: {e}")
 
     st.divider()
 
-    # Knowledge Management (The /upload Endpoint)
+    # Knowledge Management (Upload Endpoint)
     st.subheader("📥 Knowledge Management")
     st.markdown('<p class="sidebar-text">Add new research papers to the Vector Store.</p>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload PDF, TXT, or MD", type=["pdf", "txt", "md"])
@@ -138,15 +126,15 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# 5. Main Chat UI Header
+# 4. Main Chat UI Header
 st.title("🔬 Research Assistant: Transformer Architecture")
 st.info("Ask complex questions about Multi-Head Attention, Positional Encodings, or any uploaded papers.")
 
-# 6. Initialize Chat History
+# 5. Initialize Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display history
+# Display Chat History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -155,49 +143,56 @@ for message in st.session_state.messages:
                 for idx, src in enumerate(message["sources"]):
                     st.caption(f"Source Chunk {idx+1}:")
                     st.write(src)
-                    st.divider()
+                    if idx < len(message["sources"]) - 1:
+                        st.divider()
 
-# 7. Chat Input & Logic (The /ask Endpoint)
+# 6. Chat Input & Generation Logic
 if prompt := st.chat_input("What would you like to know?"):
-    # Add user message to history
+    # Add user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Call API for response
+    # Process Assistant Response
     with st.chat_message("assistant"):
+        api_success = False
+        answer = ""
+        sources = []
+        
+        # Phase 1: Call API inside status container
         with st.status("Consulting the knowledge base...", expanded=True) as status:
             try:
-                # API Call to /ask
                 payload = {"prompt": prompt}
                 response = requests.post(f"{API_URL}/ask", json=payload)
                 
                 if response.status_code == 200:
                     data = response.json()
-                    answer = data["answer"]
-                    sources = data["sources"]
-                    
+                    answer = data.get("answer", "")
+                    sources = data.get("sources", [])
+                    api_success = True
                     status.update(label="Analysis Complete!", state="complete", expanded=False)
-                    
-                    # Display Answer
-                    st.markdown(answer)
-                    
-                    # Display Sources
-                    with st.expander("🔍 View Evidence (Retrieved Context)"):
-                        for idx, src in enumerate(sources):
-                            st.caption(f"Source Chunk {idx+1}:")
-                            st.write(src)
-                    
-                    # Save to session state
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": answer, 
-                        "sources": sources
-                    })
                 else:
-                    status.update(label="API Error", state="error")
+                    status.update(label="API Error", state="error", expanded=False)
                     st.error("The backend returned an error. Please check your API logs.")
-                    
             except Exception as e:
-                status.update(label="Connection Failed", state="error")
+                status.update(label="Connection Failed", state="error", expanded=False)
                 st.error(f"Could not connect to the API: {e}")
+
+        # Phase 2: Render results OUTSIDE status container to avoid nested expander errors
+        if api_success:
+            st.markdown(answer)
+            
+            if sources:
+                with st.popover("🔍 View Evidence (Retrieved Context)"):
+                    for idx, src in enumerate(sources):
+                        st.caption(f"Source Chunk {idx+1}:")
+                        st.write(src)
+                        if idx < len(sources) - 1:
+                            st.divider()
+
+            # Append to session state
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": answer, 
+                "sources": sources
+            })
