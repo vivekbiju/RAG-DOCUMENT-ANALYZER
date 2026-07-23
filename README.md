@@ -1,4 +1,3 @@
-
 ---
 title: RAG Document Analyzer
 emoji: 🧪
@@ -224,7 +223,7 @@ docker-compose up --build
 
 ## Screenshots
 ![alt text](image.png)
-*Live production interface tracking system health metrics, benchmark scores, and rendering evidence context spans.*
+
 <img width="1552" height="477" alt="image" src="https://github.com/user-attachments/assets/090e4dd3-673b-4f7e-b7be-89a18e5ea8ea" />
 
 ---
